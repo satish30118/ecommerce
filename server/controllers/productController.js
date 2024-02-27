@@ -83,8 +83,8 @@ const productImageController = async (req, res) => {
     if (product.image.data) {
       res.set("Content-Type", product.image.contentType);
       return res.status(200).send(product.image.data);
-    }else{
-        return res.send("NOT FOUND")
+    } else {
+      return res.send("NOT FOUND");
     }
   } catch (error) {
     console.log(`ERROR IN GETIING PRODUCT IMAGE ${error}`);
@@ -97,72 +97,115 @@ const productImageController = async (req, res) => {
 
 //DELETE PRODUCT
 const deleteProductController = async (req, res) => {
-    try {
-      const product = await productModel.findByIdAndDelete(req.params.id).select("-image");
+  try {
+    const product = await productModel
+      .findByIdAndDelete(req.params.id)
+      .select("-image");
 
-        return res.status(200).send({
-            success:true,
-            message:"Product Deleted successfully!"
-        });
-
-    } catch (error) {
-      console.log(`ERROR IN DELETING PRODUCT ${error}`);
-      res.status(500).send({
-        success: false,
-        message: "Server Problem, Please try again!",
-      });
-    }
+    return res.status(200).send({
+      success: true,
+      message: "Product Deleted successfully!",
+    });
+  } catch (error) {
+    console.log(`ERROR IN DELETING PRODUCT ${error}`);
+    res.status(500).send({
+      success: false,
+      message: "Server Problem, Please try again!",
+    });
   }
+};
 
-  //UPDATE PRODUCT
-  const updateProductController = async (req, res) => {
-    try {
-        const { name, description, price, category, quantity, shipping } =
-        req.fields;
-      const { image } = req.files;
+//UPDATE PRODUCT
+const updateProductController = async (req, res) => {
+  try {
+    const { name, description, price, category, quantity, shipping } =
+      req.fields;
+    const { image } = req.files;
 
-      const product = await productModel.findByIdAndUpdate(req.params.id,{ ...req.fields, slug: slugify(name) }, {new:true});
-      if (image) {
-        product.image.data = fs.readFileSync(image.path);
-        product.contentType = image.type;
-      }
-  
-      await product.save();
-      res.status(201).send({
-        success: true,
-        message: "Product Updated successfully",
-        product,
-      });
-    } catch (error) {
-      console.log(`ERROR IN UPDATING PRODUCT ${error}`);
-      res.status(500).send({
-        success: false,
-        message: "Server Problem, Please try again!",
-      });
+    const product = await productModel.findByIdAndUpdate(
+      req.params.id,
+      { ...req.fields, slug: slugify(name) },
+      { new: true }
+    );
+    if (image) {
+      product.image.data = fs.readFileSync(image.path);
+      product.contentType = image.type;
     }
-  };
 
+    await product.save();
+    res.status(201).send({
+      success: true,
+      message: "Product Updated successfully",
+      product,
+    });
+  } catch (error) {
+    console.log(`ERROR IN UPDATING PRODUCT ${error}`);
+    res.status(500).send({
+      success: false,
+      message: "Server Problem, Please try again!",
+    });
+  }
+};
 
-  //Filter Product 
+//Filter Product
 
-  const productFilterController = async(req, res)=>{
-    try {
-      let args = {};
-      const {checked, prices} = req.body;
-      if(checked.length>0) args.category = checked;
-      if(prices.length) args.price = {$gte:prices[0], $lte:prices[1]};
+const productFilterController = async (req, res) => {
+  try {
+    let args = {};
+    const { checked, prices } = req.body;
+    if (checked.length > 0) args.category = checked;
+    if (prices.length) args.price = { $gte: prices[0], $lte: prices[1] };
 
-      const filteredProducts = await productModel.find(args)
+    const filteredProducts = await productModel.find(args);
+    res.status(200).send({
+      filteredProducts,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      message: "Server Problem",
+    });
+  }
+};
+
+//Product count
+
+const productCountController = async (req, res) => {
+  try {
+    const totalProducts = await productModel.find({}).count();
+    res.status(200).send({
+      totalProducts,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      message: "Server Problem",
+    });
+  }
+};
+
+const productListController = async (req, res) => {
+  try {
+    const perPage = 3;
+    const page = req.params.page ? req.params.page : 1;
+    const products = await productModel
+      .find({})
+      .select("-image")
+      .skip((page - 1) * perPage)
+      .limit(3)
+      .sort({ createdAt: -1 });
+
       res.status(200).send({
-        filteredProducts,
+        products
       })
-    } catch (error) {
-      console.log(error);
-      res.status(400).send({
-        message:"Server Problem"
-      })
-    }
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      message: "Server Problem",
+    });
   }
+};
+
 module.exports = {
   createProductController,
   getProductController,
@@ -170,5 +213,7 @@ module.exports = {
   productImageController,
   deleteProductController,
   updateProductController,
-  productFilterController
+  productFilterController,
+  productCountController,
+  productListController,
 };
