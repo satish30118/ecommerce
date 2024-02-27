@@ -141,11 +141,34 @@ const deleteProductController = async (req, res) => {
       });
     }
   };
+
+
+  //Filter Product 
+
+  const productFilterController = async(req, res)=>{
+    try {
+      let args = {};
+      const {checked, prices} = req.body;
+      if(checked.length>0) args.category = checked;
+      if(prices.length) args.price = {$gte:prices[0], $lte:prices[1]};
+
+      const filteredProducts = await productModel.find(args)
+      res.status(200).send({
+        filteredProducts,
+      })
+    } catch (error) {
+      console.log(error);
+      res.status(400).send({
+        message:"Server Problem"
+      })
+    }
+  }
 module.exports = {
   createProductController,
   getProductController,
   getSingleProductController,
   productImageController,
   deleteProductController,
-  updateProductController
+  updateProductController,
+  productFilterController
 };
