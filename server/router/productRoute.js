@@ -1,6 +1,6 @@
 const express = require("express");
 const { userVerification, adminVerification } = require("../middleware/authMiddleware");
-const { createProductController, getProductController, getSingleProductController, productImageController, deleteProductController, updateProductController, productFilterController, productCountController, productListController } = require("../controllers/productController");
+const { createProductController, getProductController, getSingleProductController, productImageController, deleteProductController, updateProductController, productFilterController, productCountController, productListController, searchProductController } = require("../controllers/productController");
 const formidable = require("express-formidable")
 
 const router = express.Router();
@@ -24,5 +24,6 @@ router.post("/filter-product",productFilterController )
 router.get("/product-count", productCountController)
 
 router.get("/product-list/:page", productListController)
+router.get("/search/:keywords", searchProductController)
 
 module.exports = router;

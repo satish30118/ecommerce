@@ -195,9 +195,27 @@ const productListController = async (req, res) => {
       .limit(3)
       .sort({ createdAt: -1 });
 
-      res.status(200).send({
-        products
+    res.status(200).send({
+      products,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(400).send({
+      message: "Server Problem",
+    });
+  }
+};
+
+const searchProductController = async (req, res) => {
+  try {
+    const { keywords } = req.params;
+    const result = await productModel
+      .find({
+        $or: [{ name: keywords }, { description: keywords }],
       })
+      .select("-image");
+
+    res.status(200).send({ message: "success", result });
   } catch (error) {
     console.log(error);
     res.status(400).send({
@@ -216,4 +234,5 @@ module.exports = {
   productFilterController,
   productCountController,
   productListController,
+  searchProductController,
 };
